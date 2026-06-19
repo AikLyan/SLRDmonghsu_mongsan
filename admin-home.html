@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>အုပ်ချုပ်ရေး Panel</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+body{
+    margin:0;
+    font-family:Arial;
+    background:#f2f2f2;
+}
+
+/* HEADER */
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#fff;
+    padding:8px;
+    border-bottom:3px solid green;
+}
+
+.logo-box{
+    width:60px;
+    height:60px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    overflow:hidden;
+}
+
+.logo-box img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.title{
+    flex:1;
+    text-align:center;
+    font-size:11px;
+    font-weight:bold;
+    color:#006400;
+    line-height:1.6;
+}
+
+.container{
+    padding:10px;
+}
+
+input{
+    width:100%;
+    padding:8px;
+    margin-bottom:10px;
+}
+
+button{
+    padding:6px 10px;
+    margin-bottom:10px;
+}
+
+table{
+    width:100%;
+    border-collapse:collapse;
+    background:white;
+}
+
+th,td{
+    border:1px solid #ccc;
+    padding:6px;
+    font-size:12px;
+    text-align:center;
+}
+
+th{
+    background:#e8f5e9;
+}
+
+/* edit */
+td input{
+    width:100%;
+    border:none;
+    text-align:center;
+    background:transparent;
+}
+</style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <div class="logo-box">
+        <img src="logo.jpg1">
+    </div>
+
+    <div class="title">
+        စိုက်ပျိုးရေး၊ မွေးမြူရေးနှင့် ဆည်မြောင်းဝန်ကြီးဌာန<br>
+        ကြေးတိုင်နှင့်မြေစာရင်းဦးစီးဌာန<br>
+        SLRD Monghsu+Mongsan<br>
+        🟢 Crop Database 🟢
+    </div>
+
+    <div class="logo-box">
+        <img src="logo.jpg">
+    </div>
+</div>
+
+<div class="container">
+
+<input type="text" id="search" placeholder="တောင်သူ / ကျေးရွာ / မြို့နယ် ရှာရန်..." oninput="render()">
+
+<button onclick="clearData()">🗑 အချက်အလက်အားလုံးဖျက်မည်</button>
+
+<table>
+<thead>
+<tr>
+    <th>ပြည်နယ်</th><th>Code</th>
+    <th>ခရိုင်</th><th>Code</th>
+    <th>မြို့နယ်</th><th>Code</th>
+    <th>ကျေးရွာ</th><th>Code</th>
+
+    <th>ကွင်းကုဒ်</th>
+    <th>ကွင်းအမှတ်</th>
+    <th>ကွင်းအမည်</th>
+
+    <th>တောင်သူအမည်</th>
+    <th>ဦးပိုင်အမှတ်</th>
+
+    <th>မြေကွက်အမှတ်</th>
+    <th>ဧက</th>
+
+    <th>မြေမျိုး</th>
+    <th>မြေယာပြုပြင်ခြင်း</th>
+
+    <th>စိုက်ပျိုးနှစ်</th>
+    <th>စပါးရာသီ</th>
+
+    <th>စိုက်ပျိုးနည်း</th>
+    <th>စံကွက်</th>
+
+    <th>ရေသွင်းနည်းလမ်း</th>
+    <th>စပါးမျိုးကွဲ</th>
+</tr>
+</thead>
+
+<tbody id="tbody">
+</tbody>
+</table>
+
+</div>
+<script>
+
+const firebaseConfig = {
+    apiKey: "AIzaSyDFmDwOjSTFEYQiQL5ie_Xto3llsbLQ1Xg",
+    authDomain: "slrdmonghsumongsan.firebaseapp.com",
+    projectId: "slrdmonghsumongsan",
+    storageBucket: "slrdmonghsumongsan.firebasestorage.app",
+    messagingSenderId: "766272399769",
+    appId: "1:766272399769:web:8c3a0e7cf5fdcf84a6cb08"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+/* 📦 DATA (FIRESTORE) */
+let data = [];
+
+/* 🔄 LIVE LOAD FROM FIRESTORE */
+db.collection("LAND_TABLE")
+.orderBy("createdAt","asc")
+.onSnapshot(snapshot => {
+
+    data = [];
+
+    snapshot.forEach(doc => {
+        data.push({ id: doc.id, ...doc.data() });
+    });
+
+    render();
+});
+
+/* 💾 SAVE (FIRESTORE UPDATE) */
+function save(){
+    // no localStorage anymore
+}
+
+/* ✏️ EDIT CELL → FIRESTORE UPDATE */
+function editCell(td, i, key){
+
+    let old = data[i][key] || "";
+
+    td.innerHTML = `<input value="${old}">`;
+
+    let input = td.querySelector("input");
+    input.focus();
+
+    input.onblur = function(){
+
+        let id = data[i].id;
+
+        let update = {};
+        update[key] = input.value;
+
+        db.collection("LAND_TABLE").doc(id).update(update);
+
+        render();
+    };
+}
+
+/* 📊 RENDER */
+function render(){
+
+    let key = document.getElementById("search").value.toLowerCase();
+    let tbody = document.getElementById("tbody");
+
+    tbody.innerHTML = "";
+
+    data
+    .filter(d =>
+        (d.farmerName||"").toLowerCase().includes(key) ||
+        (d.village||"").toLowerCase().includes(key) ||
+        (d.township||"").toLowerCase().includes(key)
+    )
+    .forEach((d,i) => {
+
+        const cell = (val, field) => `
+            <td ondblclick="editCell(this, ${i}, '${field}')">
+                ${val || ""}
+            </td>`;
+
+        tbody.innerHTML += `
+        <tr>
+            ${cell(d.state,'state')}
+            <td>${d.stateCode||""}</td>
+
+            ${cell(d.district,'district')}
+            <td>${d.districtCode||""}</td>
+
+            ${cell(d.township,'township')}
+            <td>${d.townshipCode||""}</td>
+
+            ${cell(d.village,'village')}
+            <td>${d.villageCode||""}</td>
+
+            ${cell(d.fieldCode,'fieldCode')}
+            ${cell(d.fieldNo,'fieldNo')}
+            ${cell(d.fieldName,'fieldName')}
+
+            ${cell(d.farmerName,'farmerName')}
+            ${cell(d.plotNo,'plotNo')}
+
+            ${cell(d.landNo,'landNo')}
+            ${cell(d.area,'area')}
+
+            ${cell(d.landType,'landType')}
+            ${cell(d.landImprove,'landImprove')}
+
+            ${cell(d.seasonYear,'seasonYear')}
+            ${cell(d.riceSeason,'riceSeason')}
+
+            ${cell(d.plantMethod,'plantMethod')}
+            ${cell(d.samplePlot,'samplePlot')}
+
+            ${cell(d.waterMethod,'waterMethod')}
+            ${cell(d.crop,'crop')}
+        </tr>
+        `;
+    });
+}
+
+/* 🗑 CLEAR (OPTIONAL - FIRESTORE DELETE ALL) */
+function clearData(){
+    if(confirm("အားလုံးဖျက်မလား?")){
+
+        db.collection("LAND_TABLE").get().then(snap=>{
+            snap.forEach(doc=>{
+                db.collection("LAND_TABLE").doc(doc.id).delete();
+            });
+        });
+
+        data=[];
+        render();
+    }
+}
+
+render();
+
+</script>
+
+</body>
+</html>
