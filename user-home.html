@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Land System Full</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<style>
+body{
+    margin:0;
+    font-family:Arial;
+    background:#f2f2f2;
+}
+
+.header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:#fff;
+    padding:8px;
+    border-bottom:3px solid green;
+}
+
+.logo-box{
+    width:60px;
+    height:60px;
+    border:1px solid #ccc;
+    border-radius:8px;
+    overflow:hidden;
+}
+
+.logo-box img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.title{
+    flex:1;
+    text-align:center;
+    font-size:10px;
+    font-weight:bold;
+    color:#006400;
+}
+
+.container{padding:10px;}
+
+.form-box,.block{
+    background:#fff;
+    padding:10px;
+    border-radius:10px;
+    margin-bottom:10px;
+}
+
+.row{
+    display:flex;
+    align-items:center;
+    margin-bottom:10px;
+    gap:8px;
+}
+
+.row label{
+    width:40%;
+    font-size:13px;
+    font-weight:bold;
+}
+
+.row input,.row select{
+    width:55%;
+    padding:6px;
+}
+
+.code-box-small{
+    width:60px;
+    text-align:center;
+    background:#e8f5e9;
+    color:#006400;
+    font-weight:bold;
+    padding:6px;
+    border-radius:5px;
+}
+
+button{
+    padding:6px 10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+<div class="logo-box"><img src="logo.jpg1"></div>
+<div class="title">စိုက်ပျိုးရေး၊မွေးမြူရေးနှင့် ဆည်မြောင်းဝန်ကြီးဌာန
+<br> ကြေးတိုင်နှင့်မြေသာရင်းဦးစီးဌာန
+<br>SLRD Monghsu+Mongsan</div>
+<div class="logo-box"><img src="logo.jpg"></div>
+</div>
+
+<div class="container">
+
+<!-- LOCATION -->
+<div class="form-box">
+
+<div class="row">
+<label>ပြည်နယ်/တိုင်း</label>
+
+<select id="state" onchange="showStateCode()">
+    <option value="shan" data-code="13">ရှမ်းပြည်နယ်</option>
+
+</select>
+
+<div class="code-box-small" id="stateCodeBox">13</div>
+</div>
+
+<div class="row">
+<label>ခရိုင်</label>
+
+<select id="district" onchange="showDistrictCode()">
+    <option value="mshDist" data-code="114">မိုင်းရှူးခရိုင်</option>
+
+</select>
+
+<div class="code-box-small" id="districtCodeBox">114</div>
+</div>
+
+<div class="row">
+<label>မြို့နယ်</label>
+<select id="township" onchange="loadVillage()">
+<option value="msh" data-code="291">မိုင်းရှူး</option>
+<option value="ms" data-code="292">မိုင်းစံ</option>
+</select>
+<div class="code-box-small" id="townCodeBox">291</div>
+</div>
+
+<div class="row">
+<label>ကျေးရွာ</label>
+<select id="village" onchange="showVillageCode()"></select>
+<div class="code-box-small" id="villageCodeBox">---</div>
+</div>
+
+</div>
+
+<!-- ⭐ FIELD SECTION  -->
+<div class="block">
+
+<h3>ကွင်းအချက်အလက်</h3>
+
+<div class="row">
+<label>ကွင်းကုဒ်</label>
+<input id="fieldCode" placeholder="">
+</div>
+
+<div class="row">
+<label>ကွင်းအမှတ်</label>
+<input id="fieldNo" placeholder="">
+</div>
+
+<div class="row">
+<label>ကွင်းအမည်</label>
+<input id="fieldName" placeholder="">
+</div>
+
+</div>
+
+<button onclick="addFarmer()">➕ တောင်သူထည့်မည်</button>
+<div id="farmers"></div>
+
+<button onclick="saveData()">💾 Save</button>
+
+</div>
+<script>
+
+/* ✔ FIREBASE INIT */
+const firebaseConfig = {
+    apiKey: "AIzaSyDFmDwOjSTFEYQiQL5ie_Xto3llsbLQ1Xg",
+    authDomain: "slrdmonghsumongsan.firebaseapp.com",
+    projectId: "slrdmonghsumongsan",
+    storageBucket: "slrdmonghsumongsan.firebasestorage.app",
+    messagingSenderId: "766272399769",
+    appId: "1:766272399769:web:8c3a0e7cf5fdcf84a6cb08"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+/* ✔ INDEXEDDB */
+let dbOffline;
+
+const request = indexedDB.open("SLRD_DB", 1);
+
+request.onupgradeneeded = function(event){
+    dbOffline = event.target.result;
+
+    dbOffline.createObjectStore("offlineData", {
+        autoIncrement:true
+    });
+};
+
+request.onsuccess = function(event){
+    dbOffline = event.target.result;
+};
+
+request.onerror = function(event){
+    console.log("IndexedDB Error", event);
+};
+
+/* ✔ DATA */
+let farmers=[];
+
+/* ✔ VILLAGES */
+const villages = {
+msh:[
+{name:"မြို့မပန်စွဲ",code:11329},
+{name:"နားစံ",code:11330},
+{name:"မော်မေ့",code:11331},
+{name:"လွိုင်နိုင်း",code:11332},
+{name:"နမ့်တောင်",code:11333},
+{name:"ဟိုက်ပါ",code:11334},
+{name:"ဝမ်ဆော့",code:11335},
+{name:"ဖာယ",code:11336},
+{name:"ဝမ်လွိုင်",code:11337},
+{name:"မိုင်းအော့",code:11338},
+{name:"နားဝိုင်",code:11339},
+{name:"နောင်အက်",code:11340},
+{name:"ကွန်ကျောင်း",code:11341},
+{name:"ရပ်ကွက်-၁ မိုင်းရှူး",code:11346},
+{name:"ရပ်ကွက်-၂ မိုင်းရှူး",code:11347},
+{name:"ရပ်ကွက်-၃ မိုင်းရှူး",code:11348},
+{name:"ရပ်ကွက်-၄ မိုင်းရှူး",code:11349}
+],
+ms:[
+{name:"မိုင်းစံ",code:11342},
+{name:"ဟိုဆိုင်",code:11343},
+{name:"ဟိုပုံ",code:11344},
+{name:"ဟွေဟေး",code:11345},
+{name:"ရပ်ကွက်-၁ မိုင်းစံ",code:11350},
+{name:"ရပ်ကွက်-၂ မိုင်းစံ",code:11351},
+{name:"ရပ်ကွက်-၃ မိုင်းစံ",code:11352}
+]
+};
+
+/* LOCATION */
+function showStateCode(){
+    let s=document.getElementById("state");
+    document.getElementById("stateCodeBox").innerText=
+    s.options[s.selectedIndex].dataset.code;
+}
+
+function showDistrictCode(){
+    let d=document.getElementById("district");
+    document.getElementById("districtCodeBox").innerText=
+    d.options[d.selectedIndex].dataset.code;
+}
+
+function loadVillage(){
+    let t=document.getElementById("township");
+    document.getElementById("townCodeBox").innerText=
+    t.options[t.selectedIndex].dataset.code;
+
+    let v=document.getElementById("village");
+    v.innerHTML="";
+
+    villages[t.value].forEach(x=>{
+        let o=document.createElement("option");
+        o.value=x.code;
+        o.text=x.name;
+        v.appendChild(o);
+    });
+
+    showVillageCode();
+}
+
+function showVillageCode(){
+    let v=document.getElementById("village");
+    if(v.options.length>0){
+        document.getElementById("villageCodeBox").innerText=
+        v.options[v.selectedIndex].value;
+    }
+}
+
+window.onload=loadVillage;
+
+/* FARM SYSTEM */
+function addFarmer(){
+    farmers.push({name:"",plots:[]});
+    render();
+}
+
+function addPlot(fi){
+    farmers[fi].plots.push({no:"",lands:[]});
+    render();
+}
+
+function addLand(fi,pi){
+    farmers[fi].plots[pi].lands.push({
+        no:"",
+        area:"",
+        type:"",
+        improve:"",
+        seasonYear:"",
+        riceSeason:"",
+        plantMethod:"",
+        samplePlot:"",
+        waterMethod:"",
+        crop:""
+    });
+    render();
+}
+
+function generateYears(){
+    let start=2025,html="";
+    for(let i=0;i<10;i++){
+        html+=`<option value="${start+i}-${start+i+1}">
+        ${start+i}-${start+i+1}</option>`;
+    }
+    return html;
+}
+
+/* ✔ RENDER (UNCHANGED LOGIC) */
+function render(){
+
+let html="";
+
+farmers.forEach((f,fi)=>{
+
+html+=`
+<div class="block">
+
+<div class="row">
+<label>တောင်သူအမည်</label>
+<input value="${f.name || ''}"
+oninput="farmers[${fi}].name=this.value">
+</div>
+
+<button onclick="addPlot(${fi})">➕ ဦးပိုင်ထည့်</button>
+`;
+
+f.plots.forEach((p,pi)=>{
+
+html+=`
+<div class="block">
+
+<div class="row">
+<label>ဦးပိုင်အမှတ်</label>
+<input value="${p.no || ''}"
+oninput="farmers[${fi}].plots[${pi}].no=this.value">
+</div>
+
+<button onclick="addLand(${fi},${pi})">➕ မြေကွက်ထည့်</button>
+`;
+
+p.lands.forEach((l,li)=>{
+
+html+=`
+<div class="block">
+
+<div class="row">
+<label>မြေကွက်</label>
+<input value="${l.no || ''}"
+oninput="farmers[${fi}].plots[${pi}].lands[${li}].no=this.value">
+</div>
+
+<div class="row">
+<label>ဧက</label>
+<input value="${l.area || ''}"
+oninput="farmers[${fi}].plots[${pi}].lands[${li}].area=this.value">
+</div>
+
+<div class="row">
+<label>မြေမျိုး</label>
+<select onchange="farmers[${fi}].plots[${pi}].lands[${li}].type=this.value">
+<option ${l.type==="ယာ"?"selected":""}>ယာ</option>
+<option ${l.type==="လယ်"?"selected":""}>လယ်</option>
+<option ${l.type==="ဥယျာဉ်"?"selected":""}>ဥယျာဉ်</option>
+</select>
+</div>
+
+<div class="row">
+<label>မြေယာပြုပြင်ခြင်း</label>
+<select onchange="farmers[${fi}].plots[${pi}].lands[${li}].improve=this.value">
+<option ${l.improve==="စနစ်ကျ"?"selected":""}>စနစ်ကျ</option>
+<option ${l.improve==="အဆင့်မြင့်"?"selected":""}>အဆင့်မြင့်</option>
+<option ${l.improve==="မဟုတ်ပါ"?"selected":""}>မဟုတ်ပါ</option>
+</select>
+</div>
+
+<div class="row">
+<label>စိုက်ပျိုးနှစ်</label>
+<select onchange="farmers[${fi}].plots[${pi}].lands[${li}].seasonYear=this.value">
+${generateYears()}
+</select>
+</div>
+
+<div class="row">
+<label>စပါးရာသီ</label>
+<select onchange="farmers[${fi}].plots[${pi}].lands[${li}].riceSeason=this.value">
+<option ${l.riceSeason==="နွေစပါး"?"selected":""}>နွေစပါး</option>
+<option ${l.riceSeason==="မိုးစပါး"?"selected":""}>မိုးစပါး</option>
+</select>
+</div>
+
+<div class="row">
+<label>စိုက်နည်း</label>
+<select onchange="farmers[${fi}].plots[${pi}].lands[${li}].plantMethod=this.value">
+<option ${l.plantMethod==="စိုက်ခင်း"?"selected":""}>စိုက်ခင်း</option>
+<option ${l.plantMethod==="အစေ့ချ"?"selected":""}>အစေ့ချ</option>
+<option ${l.plantMethod==="ကြဲခင်း"?"selected":""}>ကြဲခင်း</option>
+</select>
+</div>
+
+<div class="row">
+<label>စံကွက်</label>
+<select onchange="farmers[${fi}].plots[${pi}].lands[${li}].samplePlot=this.value">
+<option ${l.samplePlot==="ရိတ်မည်"?"selected":""}>ရိတ်မည်</option>
+<option ${l.samplePlot==="မရိတ်ပါ"?"selected":""}>မရိတ်ပါ</option>
+</select>
+</div>
+
+<div class="row">
+<label>ရေသွင်းနည်း</label>
+<select onchange="farmers[${fi}].plots[${pi}].lands[${li}].waterMethod=this.value">
+<option ${l.waterMethod==="ဆည်/ကန်"?"selected":""}>ဆည်/ကန်</option>
+<option ${l.waterMethod==="မြစ်ရေတင်"?"selected":""}>မြစ်ရေတင်</option>
+<option ${l.waterMethod==="ရေစုပ်စက်"?"selected":""}>ရေစုပ်စက်</option>
+</select>
+</div>
+
+<div class="row">
+<label>စပါးမျိုးကွဲ</label>
+<select onchange="farmers[${fi}].plots[${pi}].lands[${li}].crop=this.value">
+<option ${l.crop==="ဧရာဝတီ"?"selected":""}>ဧရာဝတီ</option>
+<option ${l.crop==="ရတနာတိုး"?"selected":""}>ရတနာတိုး</option>
+<option ${l.crop==="မနောသုခ"?"selected":""}>မနောသုခ</option>
+</select>
+</div>
+
+</div>
+`;
+});
+
+html+=`</div>`;
+});
+
+html+=`</div>`;
+});
+
+document.getElementById("farmers").innerHTML=html;
+}
+function saveOffline(rows){
+
+    const tx =
+    dbOffline.transaction(["offlineData"],"readwrite");
+
+    const store =
+    tx.objectStore("offlineData");
+
+    rows.forEach(r=>{
+        store.add(r);
+    });
+
+    console.log("✔ IndexedDB Save Done");
+}
+/* ✔ SAVE TO FIRESTORE */
+function saveData(){
+
+    let rows = [];
+
+    farmers.forEach(f=>{
+    f.plots.forEach(p=>{
+    p.lands.forEach(l=>{
+
+        rows.push({
+            state: document.getElementById("state").value,
+            stateCode: document.getElementById("stateCodeBox").innerText,
+
+            district: document.getElementById("district").value,
+            districtCode: document.getElementById("districtCodeBox").innerText,
+
+            township: document.getElementById("township").value,
+            townshipCode: document.getElementById("townCodeBox").innerText,
+
+            village: document.getElementById("village").value,
+            villageCode: document.getElementById("villageCodeBox").innerText,
+
+            fieldCode: document.getElementById("fieldCode").value,
+            fieldNo: document.getElementById("fieldNo").value,
+            fieldName: document.getElementById("fieldName").value,
+
+            farmerName: f.name,
+            plotNo: p.no,
+
+            landNo: l.no,
+            area: l.area,
+            landType: l.type,
+            landImprove: l.improve,
+
+            seasonYear: l.seasonYear,
+            riceSeason: l.riceSeason,
+            plantMethod: l.plantMethod,
+            samplePlot: l.samplePlot,
+            waterMethod: l.waterMethod,
+            crop: l.crop,
+
+            createdAt: new Date().toISOString(),
+            synced: false
+        });
+
+    });
+    });
+    });
+// =========================
+    // 🟢 INTERNET CHECK
+    // =========================
+    if(navigator.onLine){
+
+            rows.forEach(r=>{
+            db.collection("LAND_TABLE").add(r);
+        });
+
+        alert("✔ Online Save ");
+
+    }
+    else {
+
+        // 🔥 OFFLINE → localStorage
+        saveOffline(rows);
+
+alert("✔ Offline Save");
+    }
+    farmers = [];
+    render();} 
+    let syncing = false;
+
+window.addEventListener("online", async function(){
+
+    const tx =
+    dbOffline.transaction(["offlineData"],"readonly");
+
+    const store =
+    tx.objectStore("offlineData");
+
+    const req = store.getAll();
+
+    req.onsuccess = async function(){
+
+        let data = req.result;
+
+        if(data.length === 0) return;
+
+        for(let d of data){
+            await db.collection("LAND_TABLE").add(d);
+        }
+
+        const tx2 =
+        dbOffline.transaction(["offlineData"],"readwrite");
+
+        tx2.objectStore("offlineData").clear();
+
+        console.log("✔ IndexedDB Sync Done");
+    };
+});
+
+/* APP START => AUTO SYNC */
+window.addEventListener("load", function(){
+
+    if(navigator.onLine){
+
+        window.dispatchEvent(
+            new Event("online")
+        );
+
+    }
+
+});
+
+</script>
+</body>
+</html>
