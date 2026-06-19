@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MongHsuSLRD Login</title>
+<link rel="manifest" href="manifest.json">
+
+<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js");
+}
+</script>
+<style>
+body{
+    margin:0;
+    padding:0;
+    background:#f2f2f2;
+    font-family:Arial,sans-serif;
+}
+
+.box{
+    width:350px;
+    max-width:90%;
+    margin:40px auto;
+    background:#fff;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 0 10px rgba(0,0,0,.15);
+    text-align:center;
+}
+
+.logo-box{
+    width:120px;
+    height:120px;
+    margin:auto;
+    border:2px dashed #999;
+    border-radius:10px;
+    overflow:hidden;
+    margin-bottom:15px;
+}
+
+.logo-box img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+}
+
+.title{
+    font-size:15px;
+    line-height:1.8;
+    margin-bottom:15px;
+    font-weight:bold;
+}
+
+input{
+    width:90%;
+    padding:12px;
+    margin:6px 0;
+    border:1px solid #ccc;
+    border-radius:6px;
+}
+
+button{
+    width:95%;
+    padding:12px;
+    background:green;
+    color:white;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    margin-top:10px;
+}
+
+button:hover{
+    opacity:.9;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+    <div class="logo-box">
+        <img src="logo.jpg" alt="Logo">
+    </div>
+
+    <div class="title">
+        ရှမ်းပြည်နယ်<br>
+        မိုင်းရှူးခရိုင်<br>
+        မိုင်းရှူးမြို့နယ်<br>
+        ကြေးတိုင်နှင့်မြေစာရင်းဦးစီးဌာန
+    </div>
+
+    <input
+        type="text"
+        id="username"
+        placeholder="Username">
+
+    <button onclick="login()">
+        Login
+    </button>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+
+
+// 🔥 LOGIN FUNCTION
+window.login = async function(){
+
+    const username = document.getElementById("username").value.trim();
+
+    if(!username){
+        alert("Username ထည့်ပါ");
+        return;
+    }
+
+    try {
+
+        const snap = await getDocs(collection(db,"users"));
+
+        let foundUser = null;
+
+        snap.forEach(doc=>{
+            let data = doc.data();
+
+            if(data.username === username){
+                foundUser = data;
+            }
+        });
+
+        if(!foundUser){
+            alert("Username မတွေ့ပါ");
+            return;
+        }
+
+        // 💡 ROLE CHECK
+        if(foundUser.role === "admin"){
+            localStorage.setItem("user", JSON.stringify(foundUser));
+            window.location.href = "admin-home.html";
+        }else{
+            localStorage.setItem("user", JSON.stringify(foundUser));
+            window.location.href = "user-home.html";
+        }
+
+    } catch(err){
+        console.log(err);
+        alert("Firebase error");
+    }
+};
+
+</script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+    apiKey: "AIzaSyD3kCZ0GpNgdEuJZRMqW2mDa5HRnXQUZcA",
+    authDomain: "monghsuslrd-a39af.firebaseapp.com",
+    projectId: "monghsuslrd-a39af",
+    storageBucket: "monghsuslrd-a39af.firebasestorage.app",
+    messagingSenderId: "1059288536036",
+    appId: "1:1059288536036:web:26fb9f1fbcc7a4b5c1edf1",
+    measurementId: "G-BLD8TXHZBX"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// LOGIN
+window.login = async function () {
+
+    const username = document.getElementById("username").value.trim();
+
+    if (!username) {
+        alert("Username ထည့်ပါ");
+        return;
+    }
+
+    try {
+        const snap = await getDocs(collection(db, "users"));
+
+        let foundUser = null;
+
+        snap.forEach(doc => {
+            const data = doc.data();
+            if (data.username === username) {
+                foundUser = data;
+            }
+        });
+
+        if (!foundUser) {
+            alert("Username မတွေ့ပါ");
+            return;
+        }
+
+        localStorage.setItem("user", JSON.stringify(foundUser));
+
+        if (foundUser.role === "admin") {
+            window.location.href = "admin-home.html";
+        } else {
+            window.location.href = "user-home.html";
+        }
+
+    } catch (err) {
+        console.log(err);
+        alert("Firebase error");
+    }
+};
+
+// AUTO LOGIN CHECK
+let user = JSON.parse(localStorage.getItem("user"));
+
+if (user) {
+    if (user.role === "admin") {
+        window.location.href = "admin-home.html";
+    } else {
+        window.location.href = "user-home.html";
+    }
+}
+ 
+</script>
+<script>
+if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("service-worker.js")
+    .then(() => {
+        console.log("Service Worker Registered");
+    });
+}
+</script>
+</body>
+</html>
