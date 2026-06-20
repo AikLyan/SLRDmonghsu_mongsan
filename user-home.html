@@ -4,9 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Land System Full</title>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-<script src="firebase.js"></script>    
+
+</script>    
 <style>
 body{
     margin:0;
@@ -91,6 +90,7 @@ button{
 <body>
 
 <div class="header">
+<button onclick="logout()">Logout</button>    
 <div class="logo-box"><img src="logo.jpg1"></div>
 <div class="title">စိုက်ပျိုးရေး၊မွေးမြူရေးနှင့် ဆည်မြောင်းဝန်ကြီးဌာန
 <br> ကြေးတိုင်နှင့်မြေသာရင်းဦးစီးဌာန
@@ -171,19 +171,14 @@ button{
 
 </div>
 <script>
+const user =
+JSON.parse(localStorage.getItem("user"));
 
+if(!user){
+    window.location.href="index.html";
+}
 /* ✔ FIREBASE INIT */
-const firebaseConfig = {
-    apiKey: "AIzaSyDFmDwOjSTFEYQiQL5ie_Xto3llsbLQ1Xg",
-    authDomain: "slrdmonghsumongsan.firebaseapp.com",
-    projectId: "slrdmonghsumongsan",
-    storageBucket: "slrdmonghsumongsan.firebasestorage.app",
-    messagingSenderId: "766272399769",
-    appId: "1:766272399769:web:8c3a0e7cf5fdcf84a6cb08"
-};
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
 
 /* ✔ INDEXEDDB */
 let dbOffline;
@@ -555,54 +550,12 @@ function saveData(){
 // =========================
     // 🟢 INTERNET CHECK
     // =========================
-    if(navigator.onLine){
-
-            rows.forEach(r=>{
-            db.collection("LAND_TABLE").add(r);
-        });
-
-        alert("✔ Online Save ");
-
-    }
-    else {
-
-        // 🔥 OFFLINE → localStorage
-        saveOffline(rows);
-
-alert("✔ Offline Save");
-    }
+  saveOffline(rows);
+alert("✔ Save Done");
     farmers = [];
     render();} 
     let syncing = false;
 
-window.addEventListener("online", async function(){
-
-    const tx =
-    dbOffline.transaction(["offlineData"],"readonly");
-
-    const store =
-    tx.objectStore("offlineData");
-
-    const req = store.getAll();
-
-    req.onsuccess = async function(){
-
-        let data = req.result;
-
-        if(data.length === 0) return;
-
-        for(let d of data){
-            await db.collection("LAND_TABLE").add(d);
-        }
-
-        const tx2 =
-        dbOffline.transaction(["offlineData"],"readwrite");
-
-        tx2.objectStore("offlineData").clear();
-
-        console.log("✔ IndexedDB Sync Done");
-    };
-});
 
 /* APP START => AUTO SYNC */
 window.addEventListener("load", function(){
@@ -616,7 +569,13 @@ window.addEventListener("load", function(){
     }
 
 });
+function logout(){
 
+    localStorage.removeItem("user");
+
+    window.location.href="index.html";
+
+}
 </script>
 </body>
 </html>
