@@ -318,6 +318,8 @@ function clearData(){
     };
 }
 function logout(){
+    if(!confirm("ထွက်မလား?")) return;
+
     localStorage.removeItem("user");
     window.location.href="index.html";
 }
