@@ -164,7 +164,54 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+let QUEUE_KEY = "SLRD_QUEUE";
 
+function saveSLRD(data){
+
+    if(navigator.onLine){
+
+        return db.collection("LAND_TABLE").add({
+            ...data,
+            createdAt: Date.now(),
+            synced: true
+        });
+
+    }else{
+
+        let queue = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
+
+        queue.push({
+            ...data,
+            createdAt: Date.now(),
+            synced: false
+        });
+
+        localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
+
+        alert("🔴 Offline သိမ်းထားပြီး sync စောင့်မယ်");
+    }
+}
+
+async function syncSLRD(){
+
+    if(!navigator.onLine) return;
+
+    let queue = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
+
+    for(let item of queue){
+
+        await db.collection("LAND_TABLE").add({
+            ...item,
+            synced: true
+        });
+    }
+
+    localStorage.removeItem(QUEUE_KEY);
+}
+
+window.addEventListener("online", syncSLRD);
+
+window.onload = syncSLRD;
 /* 📦 DATA (FIRESTORE) */
 let data = [];
 
