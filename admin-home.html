@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>အုပ်ချုပ်ရေး Panel</title>
-
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <style>
     
 body{
@@ -162,38 +163,43 @@ td input{
 </div>
 <script>
 
-const user =
-JSON.parse(localStorage.getItem("user"));
+const user = JSON.parse(localStorage.getItem("user"));
 
 if(!user || user.role !== "admin"){
     window.location.href = "index.html";
 }
 
+const firebaseConfig = {
+    apiKey: "AIzaSyDFmDwOjSTFEYQiQL5ie_Xto3llsbLQ1Xg",
+    authDomain: "slrdmonghsumongsan.firebaseapp.com",
+    projectId: "slrdmonghsumongsan",
+    storageBucket: "slrdmonghsumongsan.firebasestorage.app",
+    messagingSenderId: "766272399769",
+    appId: "1:766272399769:web:8c3a0e7cf5fdcf84a6cb08"
+};
 
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 /* 📦 DATA (FIRESTORE) */
 let data = [];
-const request = indexedDB.open("SLRD_DB",1);
 
-request.onsuccess = function(e){
+db.collection("lands")
+.orderBy("serverTime", "desc")
+.get()
+.then(snapshot => {
 
-    const db = e.target.result;
+    data = [];
 
-    const tx = db.transaction(
-        ["offlineData"],
-        "readonly"
-    );
+    snapshot.forEach(doc => {
+        data.push({
+            id: doc.id,
+            ...doc.data()
+        });
+    });
 
-    const store = tx.objectStore("offlineData");
-
-    const getReq = store.getAll();
-
-    getReq.onsuccess = function(){
-
-        data = getReq.result;
-
-        render();
-    };
-};
+    render();
+});
+    
 /* 📊 RENDER */
 function render(){
 
@@ -262,7 +268,9 @@ function editCell(td, i, key){
     let input = td.querySelector("input");
 
     input.focus();
-
+db.collection("lands").doc(data[i].id).update({
+    [key]: input.value
+});
     input.onblur = function(){
 
         data[i][key] = input.value;
