@@ -373,6 +373,14 @@ oninput="farmers[${fi}].plots[${pi}].lands[${li}].area=this.value">
 <option ${l.type==="ယာ"?"selected":""}>ယာ</option>
 <option ${l.type==="လယ်"?"selected":""}>လယ်</option>
 <option ${l.type==="ဥယျာဉ်"?"selected":""}>ဥယျာဉ်</option>
+<option ${l.type==="ကိုင်း/ကျွန်း"?"selected":""}>ကိုင်း/ကျွန်း</option>
+<option ${l.type==="ဓနိ"?"selected":""}>ဓနိ</option>
+<option ${l.type==="တောင်ယာ"?"selected":""}>တောင်ယာ</option>
+<option ${l.type==="သစ်တောကျူး/စားကျက်ကျူး"?"selected":""}>သစ်တောကျူး/စားကျက်ကျူး</option>
+<option ${l.type==="မြေရိုင်းကျူး"?"selected":""}>မြေရိုင်းကျူး</option>
+<option ${l.type==="စက်ရုံမြေကျူး"?"selected":""}>စက်ရုံမြေကျူး</option>
+<option ${l.type==="သာသနာ/သုဿန်ကျူး"?"selected":""}>သာသနာ/သုဿန်ကျူး</option>
+<option ${l.type==="အခြား"?"selected":""}>အခြား</option>
 </select>
 </div>
 
@@ -423,15 +431,50 @@ ${generateYears()}
 <option ${l.waterMethod==="ဆည်/ကန်"?"selected":""}>ဆည်/ကန်</option>
 <option ${l.waterMethod==="မြစ်ရေတင်"?"selected":""}>မြစ်ရေတင်</option>
 <option ${l.waterMethod==="ရေစုပ်စက်"?"selected":""}>ရေစုပ်စက်</option>
+<option ${l.waterMethod==="ဆိုလာရေတင်"?"selected":""}>ဆိုလာရေတင်</option>
+<option ${l.waterMethod==="ချောင်းပိတ်/မြောင်းပိတ်"?"selected":""}>ချောင်းပိတ်/မြောင်းပိတ်</option>
+<option ${l.waterMethod==="မိုးကောင်းသောက်"?"selected":""}>မိုးကောင်းသောက်</option>
+<option ${l.waterMethod==="အခြား"?"selected":""}>အခြား</option>
 </select>
 </div>
 
 <div class="row">
 <label>စပါးမျိုးကွဲ</label>
 <select onchange="farmers[${fi}].plots[${pi}].lands[${li}].crop=this.value">
-<option ${l.crop==="ဧရာဝတီ"?"selected":""}>ဧရာဝတီ</option>
-<option ${l.crop==="ရတနာတိုး"?"selected":""}>ရတနာတိုး</option>
+<option ${l.crop==="ငစိန်"?"selected":""}>ငစိန်</option>
+<option ${l.crop==="ဧည့်မထ(ခြား)"?"selected":""}>ဧည့်မထ(ခြား)</option>
+<option ${l.crop==="ဧည့်မထ(ကောင်း)"?"selected":""}>ဧည့်မထ(ကောင်း)</option>
+<option ${l.crop==="ရွှေရင်အေး"?"selected":""}>ရွှေရင်အေး</option>
+<option ${l.crop==="ဆင်းရွှေဝါ"?"selected":""}>ဆင်းရွှေဝါ</option>
+<option ${l.crop==="ယာစပါး(ခြား)"?"selected":""}>ယာစပါး(ခြား)</option>
+<option ${l.crop==="တောင်ယာစပါး"?"selected":""}>တောင်ယာစပါး</option>
 <option ${l.crop==="မနောသုခ"?"selected":""}>မနောသုခ</option>
+<option ${l.crop==="ဆင်းသုခ"?"selected":""}>ဆင်းသုခ</option>
+<option ${l.crop==="နှံကောက်"?"selected":""}>နှံကောက်</option>
+<option ${l.crop==="GW11"?"selected":""}>GW11</option>
+<option ${l.crop==="အောင်နိုင်တိုး"?"selected":""}>အောင်နိုင်တိုး</option>
+<option ${l.crop==="ပေါ်ဆန်း"?"selected":""}>ပေါ်ဆန်း</option>
+<option ${l.crop==="ဧရာမင်း"?"selected":""}>ဧရာမင်း</option>
+<option ${l.crop==="မှော်ဘီ၃"?"selected":""}>မှော်ဘီ၃</option>
+<option ${l.crop==="ရွှေသွယ်ရင်"?"selected":""}>ရွှေသွယ်ရင်</option>
+<option ${l.crop==="ရွှေမနော်"?"selected":""}>ရွှေမနော်</option>
+<option ${l.crop==="ရက်(၉၀)"?"selected":""}>ရက်(၉၀)</option>
+<option ${l.crop==="သီးထပ်ရင်"?"selected":""}>သီးထပ်ရင်</option>
+<option ${l.crop==="ကောက်ညှင်း"?"selected":""}>ကောက်ညှင်း</option>
+<option ${l.crop==="နယူးဧရာ"?"selected":""}>နယူးဧရာ</option>
+<option ${l.crop==="ရတနာတိုး"?"selected":""}>ရတနာတိုး</option>
+<option ${l.crop==="ပခမ်း"?"selected":""}>ပခမ်း</option>
+<option ${l.crop==="ကရင်မ"?"selected":""}>ကရင်မ</option>
+<option ${l.crop==="ဗျော့ထွန်း"?"selected":""}>ဗျော့ထွန်း</option>
+<option ${l.crop==="စာဖိုးသာ"?"selected":""}>စာဖိုးသာ</option>
+<option ${l.crop==="ဗီယက်နမ်"?"selected":""}>ဗီယက်နမ်</option>
+<option ${l.crop==="ဗျော့သုခ"?"selected":""}>ဗျော့သုခ</option>
+<option ${l.crop==="ထိုင်းကောက်ညှင်းမွှေး"?"selected":""}>ထိုင်းကောက်ညှင်းမွှေး</option>
+<option ${l.crop==="ကျော်ဇေယျ"?"selected":""}>ကျော်ဇေယျ</option>
+<option ${l.crop==="ရွှေဝါထွန်း"?"selected":""}>ရွှေဝါထွန်း</option>
+<option ${l.crop==="ဆင်းဧရီ၃"?"selected":""}>ဆင်းဧရီ၃</option>
+<option ${l.crop==="ငွေတိုး"?"selected":""}>ငွေတိုး</option>
+<option ${l.crop==="အခြား"?"selected":""}>အခြား</option>
 </select>
 </div>
 
@@ -454,7 +497,6 @@ function saveOffline(rows){
 
     const store =
     tx.objectStore("offlineData");
-
     rows.forEach(r=>{
         store.add(r);
     });
