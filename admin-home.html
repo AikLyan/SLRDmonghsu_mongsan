@@ -4,17 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>အုပ်ချုပ်ရေး Panel</title>
-<script src="firebase/firebase-app.js"></script>
-<script src="firebase/firebase-firestore.js"></script>
 
-<script src="firebase.js"></script>
 <style>
+    
 body{
     margin:0;
     font-family:Arial;
     background:#f2f2f2;
 }
-
+.logout-btn{
+    position:fixed;
+    top:10px;
+    right:10px;
+    background:red;
+    color:white;
+    border:none;
+    border-radius:5px;
+    padding:8px 12px;
+}
 /* HEADER */
 .header{
     display:flex;
@@ -91,7 +98,7 @@ td input{
 </head>
 
 <body>
-
+<button class="logout-btn" onclick="logout()">Logout</button>
 <!-- HEADER -->
 <div class="header">
     <div class="logo-box">
@@ -155,114 +162,38 @@ td input{
 </div>
 <script>
 
-const firebaseConfig = {
-    apiKey: "AIzaSyDFmDwOjSTFEYQiQL5ie_Xto3llsbLQ1Xg",
-    authDomain: "slrdmonghsumongsan.firebaseapp.com",
-    projectId: "slrdmonghsumongsan",
-    storageBucket: "slrdmonghsumongsan.firebasestorage.app",
-    messagingSenderId: "766272399769",
-    appId: "1:766272399769:web:8c3a0e7cf5fdcf84a6cb08"
-};
+const user =
+JSON.parse(localStorage.getItem("user"));
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-let QUEUE_KEY = "SLRD_QUEUE";
-
-function saveSLRD(data){
-
-    if(navigator.onLine){
-
-        return db.collection("LAND_TABLE").add({
-            ...data,
-            createdAt: Date.now(),
-            synced: true
-        });
-
-    }else{
-
-        let queue = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
-
-        queue.push({
-            ...data,
-            createdAt: Date.now(),
-            synced: false
-        });
-
-        localStorage.setItem(QUEUE_KEY, JSON.stringify(queue));
-
-        alert("🔴 Offline သိမ်းထားပြီး sync စောင့်မယ်");
-    }
+if(!user || user.role !== "admin"){
+    window.location.href = "index.html";
 }
 
-async function syncSLRD(){
 
-    if(!navigator.onLine) return;
-
-    let queue = JSON.parse(localStorage.getItem(QUEUE_KEY)) || [];
-
-    for(let item of queue){
-
-        await db.collection("LAND_TABLE").add({
-            ...item,
-            synced: true
-        });
-    }
-
-    localStorage.removeItem(QUEUE_KEY);
-}
-
-window.addEventListener("online", syncSLRD);
-
-window.onload = syncSLRD;
 /* 📦 DATA (FIRESTORE) */
 let data = [];
+const request = indexedDB.open("SLRD_DB",1);
 
-/* 🔄 LIVE LOAD FROM FIRESTORE */
-db.collection("LAND_TABLE")
-.orderBy("createdAt","asc")
-.onSnapshot(snapshot => {
+request.onsuccess = function(e){
 
-    data = [];
+    const db = e.target.result;
 
-    snapshot.forEach(doc => {
-        data.push({ id: doc.id, ...doc.data() });
-    });
+    const tx = db.transaction(
+        ["offlineData"],
+        "readonly"
+    );
 
-    render();
-});
+    const store = tx.objectStore("offlineData");
 
-/* 💾 SAVE (FIRESTORE UPDATE) */
-function save(data){
-   ket db =
-JSON.parse(LocalStorage.getItem("SLRD_DATA")) ||
-[];
-   db.push(data);
-    localStorage.saeItem("SLRD_DATA",
-JSON.stringify(db));}
+    const getReq = store.getAll();
 
-/* ✏️ EDIT CELL → FIRESTORE UPDATE */
-function editCell(td, i, key){
+    getReq.onsuccess = function(){
 
-    let old = data[i][key] || "";
-
-    td.innerHTML = `<input value="${old}">`;
-
-    let input = td.querySelector("input");
-    input.focus();
-
-    input.onblur = function(){
-
-        let id = data[i].id;
-
-        let update = {};
-        update[key] = input.value;
-
-        db.collection("LAND_TABLE").doc(id).update(update);
+        data = getReq.result;
 
         render();
     };
-}
-
+};
 /* 📊 RENDER */
 function render(){
 
@@ -279,11 +210,10 @@ function render(){
     )
     .forEach((d,i) => {
 
-        const cell = (val, field) => `
-            <td ondblclick="editCell(this, ${i}, '${field}')">
-                ${val || ""}
-            </td>`;
-
+       const cell = (val, field) => `
+   <td onclick="editCell(this, ${i}, '${field}')">
+        ${val || ""}
+    </td>`;
         tbody.innerHTML += `
         <tr>
             ${cell(d.state,'state')}
@@ -323,24 +253,66 @@ function render(){
         `;
     });
 }
+function editCell(td, i, key){
 
+    let old = data[i][key] || "";
+
+    td.innerHTML = `<input value="${old}">`;
+
+    let input = td.querySelector("input");
+
+    input.focus();
+
+    input.onblur = function(){
+
+        data[i][key] = input.value;
+
+        const request = indexedDB.open("SLRD_DB",1);
+
+        request.onsuccess = function(e){
+
+            const db = e.target.result;
+
+            const tx = db.transaction(
+                ["offlineData"],
+                "readwrite"
+            );
+
+            const store = tx.objectStore("offlineData");
+
+            store.put(data[i]);
+        };
+
+        render();
+    };
+}
 /* 🗑 CLEAR (OPTIONAL - FIRESTORE DELETE ALL) */
 function clearData(){
-    if(confirm("အားလုံးဖျက်မလား?")){
 
-        db.collection("LAND_TABLE").get().then(snap=>{
-            snap.forEach(doc=>{
-                db.collection("LAND_TABLE").doc(doc.id).delete();
-            });
-        });
+    if(!confirm("အားလုံးဖျက်မလား?")) return;
 
-        data=[];
+    const request = indexedDB.open("SLRD_DB",1);
+
+    request.onsuccess = function(e){
+
+        const db = e.target.result;
+
+        const tx = db.transaction(
+            ["offlineData"],
+            "readwrite"
+        );
+
+        tx.objectStore("offlineData").clear();
+
+        data = [];
+
         render();
-    }
+    };
 }
-
-render();
-
+function logout(){
+    localStorage.removeItem("user");
+    window.location.href="index.html";
+}
 </script>
 
 </body>
