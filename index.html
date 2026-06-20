@@ -104,15 +104,17 @@ button:hover{
 
 </div>
 
-<script type="module">
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<script>
+const users = [
+  { username: "admin", role: "admin" },
+  { username: "user1", role: "user" },
+  { username: "user2", role: "user" },
+  { username: "user3", role: "user" },
+  { username: "user4", role: "user" }
+];
 
-
-
-// 🔥 LOGIN FUNCTION
-window.login = async function(){
+window.login = function(){
 
     const username = document.getElementById("username").value.trim();
 
@@ -121,117 +123,35 @@ window.login = async function(){
         return;
     }
 
-    try {
+    const foundUser = users.find(
+        user => user.username === username
+    );
 
-        const snap = await getDocs(collection(db,"users"));
-
-        let foundUser = null;
-
-        snap.forEach(doc=>{
-            let data = doc.data();
-
-            if(data.username === username){
-                foundUser = data;
-            }
-        });
-
-        if(!foundUser){
-            alert("Username မတွေ့ပါ");
-            return;
-        }
-
-        // 💡 ROLE CHECK
-        if(foundUser.role === "admin"){
-            localStorage.setItem("user", JSON.stringify(foundUser));
-            window.location.href = "admin-home.html";
-        }else{
-            localStorage.setItem("user", JSON.stringify(foundUser));
-            window.location.href = "user-home.html";
-        }
-
-    } catch(err){
-        console.log(err);
-        alert("Firebase error");
-    }
-};
-
-</script>
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-
-const firebaseConfig = {
-    apiKey: "AIzaSyD3kCZ0GpNgdEuJZRMqW2mDa5HRnXQUZcA",
-    authDomain: "monghsuslrd-a39af.firebaseapp.com",
-    projectId: "monghsuslrd-a39af",
-    storageBucket: "monghsuslrd-a39af.firebasestorage.app",
-    messagingSenderId: "1059288536036",
-    appId: "1:1059288536036:web:26fb9f1fbcc7a4b5c1edf1",
-    measurementId: "G-BLD8TXHZBX"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-
-// LOGIN
-window.login = async function () {
-
-    const username = document.getElementById("username").value.trim();
-
-    if (!username) {
-        alert("Username ထည့်ပါ");
+    if(!foundUser){
+        alert("Username မတွေ့ပါ");
         return;
     }
 
-    try {
-        const snap = await getDocs(collection(db, "users"));
+    localStorage.setItem(
+        "user",
+        JSON.stringify(foundUser)
+    );
 
-        let foundUser = null;
-
-        snap.forEach(doc => {
-            const data = doc.data();
-            if (data.username === username) {
-                foundUser = data;
-            }
-        });
-
-        if (!foundUser) {
-            alert("Username မတွေ့ပါ");
-            return;
-        }
-
-        localStorage.setItem("user", JSON.stringify(foundUser));
-
-        if (foundUser.role === "admin") {
-            window.location.href = "admin-home.html";
-        } else {
-            window.location.href = "user-home.html";
-        }
-
-    } catch (err) {
-        console.log(err);
-        alert("Firebase error");
+    if(foundUser.role === "admin"){
+        window.location.href = "admin-home.html";
+    }else{
+        window.location.href = "user-home.html";
     }
 };
 
-// AUTO LOGIN CHECK
-let user = JSON.parse(localStorage.getItem("user"));
+const user = JSON.parse(localStorage.getItem("user"));
 
-if (user) {
-    if (user.role === "admin") {
+if(user){
+    if(user.role === "admin"){
         window.location.href = "admin-home.html";
-    } else {
+    }else{
         window.location.href = "user-home.html";
     }
-}
- 
-</script>
-<script>
-if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js")
-    .then(() => {
-        console.log("Service Worker Registered");
-    });
 }
 </script>
 </body>
